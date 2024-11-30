@@ -680,7 +680,7 @@ def train_one_epoch_calvin(
                     if epoch > 0:
                         os.remove(ckpt_path)
                 state_dict = model.state_dict()
-                torch.save(state_dict, f"/share/dmh/hydra/checkpoints/RoboFlamingo_test_Step{global_step}_tokenizer_grad8_window_size_12.pth")
+                torch.save(state_dict, f"/share/dmh/hydra/checkpoints/hydra_Step{global_step}_tokenizer_grad8_window_size_12.pth")
 
 def train_one_epoch_calvin_cotrain(
     args,

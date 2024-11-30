@@ -25,6 +25,7 @@ from transformers import (
 )
 
 from robot_flamingo.models.factory import create_model_and_transforms, mpt_dict
+from safetensors.torch import load_file
 
 
 def random_seed(seed=42, rank=0):
@@ -374,7 +375,12 @@ def main():
 
     checkpoint_path = args.openflamingo_checkpoint
     if not args.debug and not args.no_pretrain:
-        model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"), strict=False)
+        if checkpoint_path.endswith(".safetensors"):
+            state_dict = load_file(checkpoint_path)  # 使用 safetensors 加载文件
+            model.load_state_dict(state_dict, strict=False)
+        else:
+            # 默认用 torch 加载 .pth 或其他格式
+            model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"), strict=False)
         if args.residual:
             model.lang_encoder.clone_parameters()
 

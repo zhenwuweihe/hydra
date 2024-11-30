@@ -83,30 +83,31 @@ class MPTFlamingo(nn.Module):
             self.replan = min(int(replan * self.window_size), 180)
         self.refresh = refresh
         if hasattr(lang_encoder.config, "d_model"):
-            self.lang_dim = lang_encoder.config.d_model  # mpt uses d_model
+            # self.lang_dim = lang_encoder.config.d_model  # mpt uses d_model
+            self.lang_dim = lang_encoder.config.hidden_size
         else:
             self.lang_dim = lang_encoder.config.hidden_size
 
         self.residual = residual
         print(self.vis_dim, self.lang_dim)
         print(lang_encoder.config)
-        if not debug:
-            if 'llama' in llm:
-                self.lang_encoder.init_flamingo(
-                    media_token_id=media_token_id,
-                    vis_hidden_size=self.vis_dim,
-                    cross_attn_every_n_layers=cross_attn_every_n_layers,
-                    use_media_placement_augmentation=self.use_media_placement_augmentation,
-                    residual=residual,
-                )
-            else:
-                self.lang_encoder.init_flamingo(
-                    media_token_id=media_token_id,
-                    lang_hidden_size=self.lang_dim,
-                    vis_hidden_size=self.vis_dim,
-                    cross_attn_every_n_layers=cross_attn_every_n_layers,
-                    gradient_checkpointing=False,
-                )
+        # if not debug:
+        #     if 'llama' in llm:
+        #         self.lang_encoder.init_flamingo(
+        #             media_token_id=media_token_id,
+        #             vis_hidden_size=self.vis_dim,
+        #             cross_attn_every_n_layers=cross_attn_every_n_layers,
+        #             use_media_placement_augmentation=self.use_media_placement_augmentation,
+        #             residual=residual,
+        #         )
+        #     else:
+        #         self.lang_encoder.init_flamingo(
+        #             media_token_id=media_token_id,
+        #             lang_hidden_size=self.lang_dim,
+        #             vis_hidden_size=self.vis_dim,
+        #             cross_attn_every_n_layers=cross_attn_every_n_layers,
+        #             gradient_checkpointing=False,
+        #         )
 
         if sep_resampler:
             self.perceiver_gripper = PerceiverResampler(dim=self.vis_dim)
@@ -126,7 +127,7 @@ class MPTFlamingo(nn.Module):
         if decoder_type == 'lstm':
             lm_head = DeterministicDecoder(in_features, self.window_size, 
             use_diff=use_diff, last_action=last_action, fusion_mode=fusion_mode, use_state=use_state, return_feature=return_feature, multi_step_action=multi_step_action, pooling=pooling)
-            self.lang_encoder.lm_head = lm_head
+            # self.lang_encoder.lm_head = lm_head
         elif decoder_type == 'fc':
             if use_hist:
                 self.lang_encoder.lm_head = self.action_head = FCDecoder(in_features, self.window_size, 
@@ -157,8 +158,8 @@ class MPTFlamingo(nn.Module):
         sep_lm_head = True
         self.sep_lm_head = sep_lm_head
         if sep_lm_head:
-            self.lm_head = self.lang_encoder.lm_head
-            self.lang_encoder.lm_head = nn.Identity()
+            self.lm_head = lm_head
+            # self.lang_encoder.lm_head = nn.Identity()
 
     def forward(
         self,
@@ -225,7 +226,7 @@ class MPTFlamingo(nn.Module):
                         self._encode_multi_vision_post_fusion(vision_x, vision_gripper)
                     elif self.fusion_mode == 'vit_concat':
                         self._encode_history_vision_fc_post(vision_x, vision_gripper)
-        
+        # import pdb; pdb.set_trace()
         output = self.lang_encoder(
             input_ids=lang_x,
             attention_mask=attention_mask.bool(),
@@ -339,8 +340,8 @@ class MPTFlamingo(nn.Module):
         if self.use_state and state_tensor is not None:
             state_tensor = self.state_fc(state_tensor)
             vision_x = torch.cat([vision_x, state_tensor], dim=2)  # reshapes to (b, T, 2*n+1, d)
-        for layer in self.lang_encoder._get_decoder_layers():
-            layer.condition_vis_x(vision_x)
+        # for layer in self.lang_encoder._get_decoder_layers():
+        #     layer.condition_vis_x(vision_x)
 
         return vision_x
 

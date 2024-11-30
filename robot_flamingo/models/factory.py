@@ -22,6 +22,12 @@ mpt_dict = {
         "cross_attn_every_n_layers": 1,
         "openflamingo_checkpoint": "/share/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth"
     },
+    "mamba_790m_hf": {
+        "lang_encoder_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf", 
+        "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf", 
+        "cross_attn_every_n_layers": 1,
+        "openflamingo_checkpoint": "/share/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf/model.safetensors"
+    },
     "mpt_4b": {
         "lang_encoder_path": "path_to/RedPajama-INCITE-Instruct-3B-v1", 
         "tokenizer_path": "path_to/RedPajama-INCITE-Instruct-3B-v1", 
@@ -180,19 +186,18 @@ def create_model_and_transforms(
                 self.transformer.wte = new_embeddings
         extend_instance(lang_encoder, EmbeddingFnMixin)
     
-    extend_instance(lang_encoder, FlamingoLMMixin)
+    # extend_instance(lang_encoder, FlamingoLMMixin)
     
-    if decoder_layers_attr_name is None:
-        decoder_layers_attr_name = _infer_decoder_layers_attr_name(lang_encoder)
-    lang_encoder.set_decoder_layers_attr_name(decoder_layers_attr_name)
+    # if decoder_layers_attr_name is None:
+    #     decoder_layers_attr_name = _infer_decoder_layers_attr_name(lang_encoder)
+    # lang_encoder.set_decoder_layers_attr_name(decoder_layers_attr_name)
     # print(lang_encoder.base_model_prefix)
     # print(getattr(lang_encoder, lang_encoder.base_model_prefix, lang_encoder))
     # print(lang_encoder)
     lang_encoder.resize_token_embeddings(len(text_tokenizer))
-    
     if 'llama' in llm_name:
         Model_fn = BCFlamingo
-    elif 'mpt' in llm_name:
+    elif 'mpt' in llm_name or 'mamba' in llm_name:
         Model_fn = MPTFlamingo
     else:
         raise NotImplementedError
@@ -238,7 +243,7 @@ def create_model_and_transforms(
     # Unfreeze perceiver, gated_cross_attn_layers, and LM input embeddings
     # model.perceiver.requires_grad_(True)
     if train_params == -1:
-        model.lang_encoder.gated_cross_attn_layers.requires_grad_(True)
+        # model.lang_encoder.gated_cross_attn_layers.requires_grad_(True)
         model.perceiver.requires_grad_(True)
     else:
         param_per_layer = 140
