@@ -1,20 +1,29 @@
 #!/bin/bash
 
-export PATH=$PATH:path/to/robot-flamingo/robot_flamingo
-export PYTHONPATH=$PYTHONPATH:path/to/robot-flamingo/robot_flamingo
+device='0,1,2,3,4,5,6,7'
+export CUDA_VISIBLE_DEVICES=$device
+
+# export PATH=$PATH:path/to/robot-flamingo/robot_flamingo
+# export PYTHONPATH=$PYTHONPATH:path/to/robot-flamingo/robot_flamingo
+export PATH=$PATH:/share/dmh/cobra/cobra/cobra/cobra
+export PYTHONPATH=$PYTHONPATH:/share/dmh/cobra/cobra/cobra/cobra
+export PATH=$PATH:/share/dmh/cobra/cobra/cobra/cobra/robot_flamingo
+export PYTHONPATH=$PYTHONPATH:/share/dmh/cobra/cobra/cobra/cobra/robot_flamingo
+export PATH=$PATH:/share/dmh/hydra/open_flamingo
+export PYTHONPATH=$PYTHONPATH:/share/dmh/hydra/open_flamingo
 
 # dataset path
-calvin_dataset_path='path/to/calvin_data/task_ABCD_D'
+calvin_dataset_path='/share/dmh/cobra/cobra/cobra/dataset/task_ABCD_D'
 # language model path
-lm_path='path/to/mpt-1b-dolly'
+lm_path='/share/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly'
 # tokenizer path
-tokenizer_path='path/to/mpt-1b-dolly'
+tokenizer_path='/share/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly'
 # openflamingo ckpt path
-openflamingo_checkpoint='path/to/OpenFlamingo-3B-vitl-mpt-1b-dolly/checkpoint.pt'
+openflamingo_checkpoint='/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth'
 
 subfix=`date "+%Y%m%d-%H%M"`
 log_file="logs/training_"${subfix}".log"
-source /mnt/bn/robotics/resources/anaconda3_arnold/bin/activate calvin_mpt
+# source /mnt/bn/robotics/resources/anaconda3_arnold/bin/activate calvin_mpt
 #python3 -m torch.distributed.launch --nnodes=1 --nproc_per_node=2  --master_port=6042 robot_flamingo/train/train_calvin.py \
 torchrun --nnodes=1 --nproc_per_node=8 --master_port=6042 robot_flamingo/train/train_calvin.py \
     --report_to_wandb \
@@ -42,4 +51,5 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=6042 robot_flamingo/train/t
     --learning_rate 1e-4 \
     --save_every_iter 10000 \
     --from_scratch \
-    --window_size 12 > ${log_file} 2>&1
+    --window_size 12 
+    # > ${log_file} 2>&1

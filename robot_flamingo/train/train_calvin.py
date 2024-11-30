@@ -290,7 +290,7 @@ def main():
     )
     # Co-Train settings
     parser.add_argument(
-        "--cotrain",
+        "--co_train",
         default=False,
         action="store_true"
     )
@@ -374,7 +374,7 @@ def main():
 
     checkpoint_path = args.openflamingo_checkpoint
     if not args.debug and not args.no_pretrain:
-        model.load_state_dict(torch.load(checkpoint_path), strict=False)
+        model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"), strict=False)
         if args.residual:
             model.lang_encoder.clone_parameters()
 
