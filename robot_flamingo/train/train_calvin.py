@@ -373,10 +373,12 @@ def main():
     )
 
     checkpoint_path = args.openflamingo_checkpoint
-    if not args.debug and not args.no_pretrain:
-        model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"), strict=False)
-        if args.residual:
-            model.lang_encoder.clone_parameters()
+    # print(f"model: {model}")
+    # print(f"checkpoint_path : {checkpoint_path}")
+    # if not args.debug and not args.no_pretrain:
+    #     model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"), strict=False)
+    #     if args.residual:
+    #         model.lang_encoder.clone_parameters()
 
     print(
         f"Flamingo model initialized with {sum(p.numel() for p in model.parameters() if p.requires_grad)} trainable parameters"

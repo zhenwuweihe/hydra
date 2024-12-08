@@ -19,7 +19,7 @@ lm_path='/share/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly'
 # tokenizer path
 tokenizer_path='/share/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly'
 # openflamingo ckpt path
-openflamingo_checkpoint='/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth'
+openflamingo_checkpoint='/share/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth'
 
 subfix=`date "+%Y%m%d-%H%M"`
 log_file="logs/training_"${subfix}".log"
@@ -27,7 +27,7 @@ log_file="logs/training_"${subfix}".log"
 #python3 -m torch.distributed.launch --nnodes=1 --nproc_per_node=2  --master_port=6042 robot_flamingo/train/train_calvin.py \
 torchrun --nnodes=1 --nproc_per_node=8 --master_port=6042 robot_flamingo/train/train_calvin.py \
     --report_to_wandb \
-    --llm_name mpt_dolly_3b \
+    --llm_name mamba_790m_hf \
     --traj_cons \
     --use_gripper \
     --fusion_mode post \

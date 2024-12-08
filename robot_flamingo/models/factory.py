@@ -4,7 +4,7 @@ import open_clip
 from typing import Optional
 from robot_flamingo.models.flamingo_bc import BCFlamingo
 from robot_flamingo.models.flamingo_mpt import MPTFlamingo
-from open_flamingo.src.flamingo_lm import FlamingoLMMixin
+from open_flamingo.src.flamingo_lm import FlamingoLMMixin, FlamingoLMMixin_Mamba
 from open_flamingo.src.utils import extend_instance
 from open_flamingo.src.factory import _infer_decoder_layers_attr_name
 import os
@@ -21,6 +21,12 @@ mpt_dict = {
         "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly", 
         "cross_attn_every_n_layers": 1,
         "openflamingo_checkpoint": "/share/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth"
+    },
+    "mamba_790m_hf": {
+        "lang_encoder_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf", 
+        "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf", 
+        "cross_attn_every_n_layers": 1,
+        "openflamingo_checkpoint": "/share/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf/model.safetensors"
     },
     "mpt_4b": {
         "lang_encoder_path": "path_to/RedPajama-INCITE-Instruct-3B-v1", 
@@ -180,8 +186,7 @@ def create_model_and_transforms(
                 self.transformer.wte = new_embeddings
         extend_instance(lang_encoder, EmbeddingFnMixin)
     
-    extend_instance(lang_encoder, FlamingoLMMixin)
-    
+    extend_instance(lang_encoder, FlamingoLMMixin_Mamba)
     if decoder_layers_attr_name is None:
         decoder_layers_attr_name = _infer_decoder_layers_attr_name(lang_encoder)
     lang_encoder.set_decoder_layers_attr_name(decoder_layers_attr_name)
@@ -192,7 +197,7 @@ def create_model_and_transforms(
     
     if 'llama' in llm_name:
         Model_fn = BCFlamingo
-    elif 'mpt' in llm_name:
+    elif 'mpt' in llm_name or 'mamba' in llm_name:
         Model_fn = MPTFlamingo
     else:
         raise NotImplementedError
