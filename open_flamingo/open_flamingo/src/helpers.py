@@ -6,7 +6,7 @@ import torch
 from einops import rearrange, repeat
 from einops_exts import rearrange_many
 from torch import einsum, nn
-
+from transformers.models.mamba.modeling_mamba import MambaBlock
 
 def exists(val):
     return val is not None
@@ -277,3 +277,67 @@ class GatedCrossAttentionBlock(nn.Module):
         x = self.ff(x) * self.ff_gate.tanh() + x
 
         return x
+
+class CrossMambaBlock(nn.Module):
+    def __init__(
+        self,
+        dim,  # 1536
+        dim_visual,  # 1024
+        config,
+        layer_idx,
+        intermediate_size=512,
+        ff_mult=2,
+    ):
+        super().__init__()
+        config.intermediate_size = intermediate_size
+        self.layer = MambaBlock(config, layer_idx)
+        self.visual_to_text = nn.Linear(dim_visual, dim, bias=False)
+
+        self.attn_gate = nn.Parameter(torch.tensor([0.0]))
+
+        self.ff = FeedForward(dim, mult=ff_mult)
+        self.ff_gate = nn.Parameter(torch.tensor([0.0]))
+
+    def forward(
+        self,
+        x,
+        media,
+    ):
+        # Ensure media has the correct shape
+        assert media.shape[-1] == self.visual_to_text.in_features, (
+            f"Expected media with last dimension {self.visual_to_text.in_features}, "
+            f"but got {media.shape[-1]}"
+        )
+
+        media = rearrange(media, "b t n d -> b (t n) d")
+        
+        media_len = media.shape[1]
+        media = self.visual_to_text(media)
+        hidden_states = torch.cat((media, x), dim=1)
+        hidden_states = (self.layer(hidden_states)[:, media_len:, :] * self.attn_gate.tanh() + x)
+        hidden_states = self.ff(hidden_states) * self.ff_gate.tanh() + hidden_states
+        
+        return hidden_states
+        
+    # def forward(
+    #     self,
+    #     x,
+    #     media,
+    # ):
+    #     # Ensure media has the correct shape
+    #     assert media.shape[-1] == self.visual_to_text.in_features, (
+    #         f"Expected media with last dimension {self.visual_to_text.in_features}, "
+    #         f"but got {media.shape[-1]}"
+    #     )
+
+    #     media = rearrange(media, "b t n d -> b (t n) d")
+        
+    #     media_len = media.shape[1]
+    #     media = self.visual_to_text(media)
+    #     hidden_states = torch.cat((media, x), dim=1)
+    #     hidden_states = (self.layer(hidden_states) * self.attn_gate.tanh() + hidden_states)
+    #     hidden_states = self.ff(hidden_states) * self.ff_gate.tanh() + hidden_states
+        
+    #     return hidden_states[:, media_len:, :]
+        
+        

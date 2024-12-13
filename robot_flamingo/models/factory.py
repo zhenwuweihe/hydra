@@ -4,7 +4,7 @@ import open_clip
 from typing import Optional
 from robot_flamingo.models.flamingo_bc import BCFlamingo
 from robot_flamingo.models.flamingo_mpt import MPTFlamingo
-from open_flamingo.src.flamingo_lm import FlamingoLMMixin, FlamingoLMMixin_Mamba
+from open_flamingo.src.flamingo_lm import FlamingoLMMixin, FlamingoLMMixin_Mamba, FlamingoLMMixin_Mamba_CrossMambaBlock
 from open_flamingo.src.utils import extend_instance
 from open_flamingo.src.factory import _infer_decoder_layers_attr_name
 import os
@@ -20,13 +20,13 @@ mpt_dict = {
         "lang_encoder_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly", 
         "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly", 
         "cross_attn_every_n_layers": 1,
-        "openflamingo_checkpoint": "/share/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth"
+        "openflamingo_checkpoint": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth"
     },
     "mamba_790m_hf": {
         "lang_encoder_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf", 
         "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf", 
         "cross_attn_every_n_layers": 1,
-        "openflamingo_checkpoint": "/share/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf/model.safetensors"
+        "openflamingo_checkpoint": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf/model.safetensors"
     },
     "mpt_4b": {
         "lang_encoder_path": "path_to/RedPajama-INCITE-Instruct-3B-v1", 
@@ -185,8 +185,8 @@ def create_model_and_transforms(
             def set_input_embeddings(self, new_embeddings):
                 self.transformer.wte = new_embeddings
         extend_instance(lang_encoder, EmbeddingFnMixin)
-    
-    extend_instance(lang_encoder, FlamingoLMMixin_Mamba)
+    # extend_instance(lang_encoder, FlamingoLMMixin_Mamba)
+    extend_instance(lang_encoder, FlamingoLMMixin_Mamba_CrossMambaBlock)
     if decoder_layers_attr_name is None:
         decoder_layers_attr_name = _infer_decoder_layers_attr_name(lang_encoder)
     lang_encoder.set_decoder_layers_attr_name(decoder_layers_attr_name)
@@ -235,25 +235,25 @@ def create_model_and_transforms(
         global_latent=global_latent,
         **flamingo_kwargs,
     )
-
+    # import pdb; pdb.set_trace()
     # Freeze all parameters
     model.requires_grad_(False)
     assert sum(p.numel() for p in model.parameters() if p.requires_grad) == 0
 
-    # Unfreeze perceiver, gated_cross_attn_layers, and LM input embeddings
+    # Unfreeze perceiver, cross_mamba_layers, and LM input embeddings
     # model.perceiver.requires_grad_(True)
     if train_params == -1:
-        model.lang_encoder.gated_cross_attn_layers.requires_grad_(True)
+        model.lang_encoder.cross_mamba_layers.requires_grad_(True)
         model.perceiver.requires_grad_(True)
     else:
         param_per_layer = 140
         layer_num = int(train_params / param_per_layer + 0.5)
         cnt = 0
-        for ix in range(len(model.lang_encoder.gated_cross_attn_layers)-1, -1, -1):
+        for ix in range(len(model.lang_encoder.cross_mamba_layers)-1, -1, -1):
             if cnt >= layer_num:
                 break
-            if model.lang_encoder.gated_cross_attn_layers[ix] is not None:
-                model.lang_encoder.gated_cross_attn_layers[ix].requires_grad_(True)
+            if model.lang_encoder.cross_mamba_layers[ix] is not None:
+                model.lang_encoder.cross_mamba_layers[ix].requires_grad_(True)
                 cnt += 1
     if freeze_sampler:
         model.perceiver.requires_grad_(False)

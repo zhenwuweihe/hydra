@@ -91,7 +91,6 @@ class MPTFlamingo(nn.Module):
         self.residual = residual
         print(self.vis_dim, self.lang_dim)
         print(lang_encoder.config)
-        # import pdb; pdb.set_trace()
 
         if not debug:
             if 'llama' in llm:

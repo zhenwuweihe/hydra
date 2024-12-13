@@ -1,25 +1,37 @@
 #!/bin/bash
 
-device='0,1,2,3,4,5,6,7'
+device="0,1,2,3,4,5,6,7"
 export CUDA_VISIBLE_DEVICES=$device
+
+
+# 获取当前工作目录
+current_dir=$(pwd)
+# 提取路径的第二部分并构造 ckpt_root
+second_dir=$(echo "$current_dir" | cut -d"/" -f2)
+
+
+export SSL_CERT_FILE=/$second_dir/dmh/anaconda3/envs/roboma/ssl/cert.pem
+export SSL_CERT_DIR=/$second_dir/dmh/anaconda3/envs/roboma/ssl
+export openssl_capath=/$second_dir/dmh/anaconda3/envs/roboma/ssl
+
 
 # export PATH=$PATH:path/to/robot-flamingo/robot_flamingo
 # export PYTHONPATH=$PYTHONPATH:path/to/robot-flamingo/robot_flamingo
-export PATH=$PATH:/share/dmh/cobra/cobra/cobra/cobra
-export PYTHONPATH=$PYTHONPATH:/share/dmh/cobra/cobra/cobra/cobra
-export PATH=$PATH:/share/dmh/cobra/cobra/cobra/cobra/robot_flamingo
-export PYTHONPATH=$PYTHONPATH:/share/dmh/cobra/cobra/cobra/cobra/robot_flamingo
-export PATH=$PATH:/share/dmh/hydra/open_flamingo
-export PYTHONPATH=$PYTHONPATH:/share/dmh/hydra/open_flamingo
+export PATH=$PATH:/$second_dir/dmh/cobra/cobra/cobra/cobra
+export PYTHONPATH=$PYTHONPATH:/$second_dir/dmh/cobra/cobra/cobra/cobra
+export PATH=$PATH:/$second_dir/dmh/cobra/cobra/cobra/cobra/robot_flamingo
+export PYTHONPATH=$PYTHONPATH:/$second_dir/dmh/cobra/cobra/cobra/cobra/robot_flamingo
+export PATH=$PATH:/$second_dir/dmh/hydra/open_flamingo
+export PYTHONPATH=$PYTHONPATH:/$second_dir/dmh/hydra/open_flamingo
 
 # dataset path
-calvin_dataset_path='/share/dmh/cobra/cobra/cobra/dataset/task_ABCD_D'
+calvin_dataset_path="/$second_dir/dmh/cobra/cobra/cobra/dataset/task_ABCD_D"
 # language model path
-lm_path='/share/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly'
+lm_path="/$second_dir/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly"
 # tokenizer path
-tokenizer_path='/share/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly'
+tokenizer_path="/$second_dir/dmh/cobra/cobra/cobra/dataset/mpt-1b-redpajama-200b-dolly"
 # openflamingo ckpt path
-openflamingo_checkpoint='/share/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth'
+openflamingo_checkpoint="/$second_dir/dmh/cobra/cobra/cobra/dataset/MPT/checkpoint_gripper_post_hist_1_aug_10_4_traj_cons_ws_12_mpt_3b_4.pth"
 
 subfix=`date "+%Y%m%d-%H%M"`
 log_file="logs/training_"${subfix}".log"
@@ -48,7 +60,7 @@ torchrun --nnodes=1 --nproc_per_node=8 --master_port=6042 robot_flamingo/train/t
     --workers 1 \
     --lr_scheduler constant \
     --warmup_steps 5000 \
-    --learning_rate 1e-4 \
+    --learning_rate 3e-5 \
     --save_every_iter 10000 \
     --from_scratch \
     --window_size 12 

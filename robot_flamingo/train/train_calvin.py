@@ -421,7 +421,7 @@ def main():
         normalizer.fit(all_actions, last_n_dims=1, mode='limits')
 
     model = model.to(device_id)
-
+    print(model.lang_encoder)
     ddp_model = DDP(model, device_ids=[device_id], find_unused_parameters=True)
 
     def get_grouped_params(model):
