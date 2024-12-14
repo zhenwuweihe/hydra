@@ -426,13 +426,13 @@ def evaluate_policy_ddp(model, env, epoch, calvin_conf_path, eval_log_dir=None, 
     
     # val_annotations = OmegaConf.load(conf_dir / "annotations/new_playtable_validation.yaml")
     if diverse_inst:
-        with open('/mnt/bn/robotics/lxh/robot-flamingo/lang_annotation_cache.json', 'r') as f:
+        with open('/' + os.getcwd().split('/')[1] + '/dmh/hydra/lang_annotation_cache.json', 'r') as f:
             val_annotations = json.load(f)
     else:
         val_annotations = OmegaConf.load(conf_dir / "annotations/new_playtable_validation.yaml")
 
     eval_log_dir = get_log_dir(eval_log_dir)
-    with open('/mnt/bn/robotics/lxh/robot-flamingo/eval_sequences.json', 'r') as f:
+    with open('/' + os.getcwd().split('/')[1] + '/dmh/hydra/eval_sequences.json', 'r') as f:
         eval_sequences = json.load(f)
     device_num = int(torch.distributed.get_world_size())
     device_id = torch.distributed.get_rank()
@@ -513,6 +513,7 @@ def rollout(env, model, task_oracle, subtask, val_annotations, plans, debug, eva
     Run the actual rollout on one subtask (which is one natural language instruction).
     """
     planned_actions = []
+    debug = True
     if debug:
         print(f"{subtask} ", end="")
         time.sleep(0.5)
