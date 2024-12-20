@@ -371,7 +371,6 @@ def main():
         no_image_patch=args.no_image_patch,
         global_latent=args.global_latent,
     )
-
     checkpoint_path = args.openflamingo_checkpoint
     # print(f"model: {model}")
     # print(f"checkpoint_path : {checkpoint_path}")

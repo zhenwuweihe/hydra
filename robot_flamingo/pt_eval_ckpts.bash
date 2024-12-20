@@ -52,11 +52,11 @@ use_gripper=$3
 use_state=$4
 fusion_mode=$5
 window_size=$6
+compress_type=$8
 export MESA_GL_VERSION_OVERRIDE=4.1
 echo logging to ${log_file}
 node_num=1
-
-MAMBA_TYPE=MOE_MAMBA N_EXPERT=2 torchrun --nnodes=1 --nproc_per_node=${node_num}  --master_port=6068 robot_flamingo/eval/eval_calvin.py \
+COMPRESS_TOKEN_TYPE=$compress_type MAMBA_TYPE=MOE_MAMBA N_EXPERT=2 torchrun --nnodes=1 --nproc_per_node=${node_num}  --master_port=6065 robot_flamingo/eval/eval_calvin.py \
     --precision fp32 \
     --use_gripper \
     --use_state \

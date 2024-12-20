@@ -8,6 +8,7 @@ from open_flamingo.src.flamingo_lm import FlamingoLMMixin, FlamingoLMMixin_Mamba
 from open_flamingo.src.utils import extend_instance
 from open_flamingo.src.factory import _infer_decoder_layers_attr_name
 import os
+import torch
 
 mpt_dict = {
     "mpt_3b": {
@@ -27,6 +28,24 @@ mpt_dict = {
         "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf", 
         "cross_attn_every_n_layers": 1,
         "openflamingo_checkpoint": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-790m-hf/model.safetensors"
+    },
+    "mamba_1.4b_hf": {
+        "lang_encoder_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-1.4b-instruct-hf", 
+        "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-1.4b-instruct-hf", 
+        "cross_attn_every_n_layers": 1,
+        "openflamingo_checkpoint": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-1.4b-instruct-hf/model.safetensors"
+    },
+    "mamba_2.8b_hf": {
+        "lang_encoder_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-2.8b-hf", 
+        "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-2.8b-hf", 
+        "cross_attn_every_n_layers": 1,
+        "openflamingo_checkpoint": '/' + os.getcwd().split('/')[1] + "/dmh/cobra/cobra/cobra/dataset/mamba-2.8b-hf/model-00001-of-00003.safetensors"
+    },
+    "mamba_7b_hf": {
+        "lang_encoder_path": '/' + os.getcwd().split('/')[1] + "/lmz/baai/hub/models--tri-ml--mamba-7b-rw/snapshots/96c3f4a2c5d4e31b5113040392b02eda803c637c", 
+        "tokenizer_path": '/' + os.getcwd().split('/')[1] + "/lmz/baai/hub/models--tri-ml--mamba-7b-rw/snapshots/96c3f4a2c5d4e31b5113040392b02eda803c637c", 
+        "cross_attn_every_n_layers": 1,
+        "openflamingo_checkpoint": '/' + os.getcwd().split('/')[1] + "/lmz/baai/hub/models--tri-ml--mamba-7b-rw/snapshots/96c3f4a2c5d4e31b5113040392b02eda803c637c/model.safetensors"
     },
     "mpt_4b": {
         "lang_encoder_path": "path_to/RedPajama-INCITE-Instruct-3B-v1", 
@@ -54,7 +73,16 @@ mpt_dict = {
     }
 }
 
-
+def remove_prefix_from_keys(d, prefix='llm.mamba.'):
+    new_dict = {}
+    for key, value in d.items():
+        if key.startswith(prefix):
+            # 去掉前缀
+            new_key = key[len(prefix):]
+        else:
+            new_key = key
+        new_dict[new_key] = value
+    return new_dict
 
 def get_transforms(
     clip_vision_encoder_path: str = "ViT-L-14",
@@ -175,7 +203,19 @@ def create_model_and_transforms(
         #     lang_encoder = AutoModelForCausalLM.from_pretrained(
         #         lang_encoder_path, local_files_only=use_local_files
         #     )
-    # hacks for MPT-1B, which doesn't have a get_input_embeddings method
+    weight = torch.load("/home/dmh/robomamba/checkpoints/zephyr_clip_224_robovqa_llava665K/zephyr-CLIP224-5epoch.pth", map_location="cpu")
+    weight = remove_prefix_from_keys(weight)
+    lang_encoder.load_state_dict(weight, strict=False)
+    # for key in weight.keys():
+    #     if key in lang_encoder.state_dict().keys():
+    #         print(f"{key} in lang_encoder_model")
+    # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    # for key in weight.keys():
+    #     if key not in lang_encoder.state_dict().keys():
+    #         print(f"{key} not in lang_encoder_model")
+        
+    # raise "stop"
+
     if "mpt-1b-redpajama-200b" in lang_encoder_path:
 
         class EmbeddingFnMixin:

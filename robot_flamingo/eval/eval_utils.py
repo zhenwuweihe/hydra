@@ -222,6 +222,9 @@ class ModelWrapper(CalvinBaseModel):
             device = 'cuda'
             image_x = image_x.to(device)
             text_x = text_x.to(device)
+            if text_x.shape[1] < 20: 
+                padding = torch.zeros((text_x.shape[0], 20-text_x.shape[1]), dtype=text_x.dtype).to(text_x.device)
+                text_x = torch.cat((text_x, padding), dim=1)
             mask = mask.to(device)
             if gripper is not None:
                 gripper = gripper.to(device)
